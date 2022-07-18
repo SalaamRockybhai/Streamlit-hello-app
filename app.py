@@ -6,6 +6,7 @@ import joblib
 
 
 
+df12 = pd.read_csv('Car_price_prediction_clean.csv')
 
 st.write('# Car Price Predictor')
 
@@ -149,7 +150,6 @@ with st.sidebar:
 
 
 
-df12 = pd.read_csv('Car_price_prediction_clean.csv')
 
 onehotencoder = joblib.load('onehotencoder.joblib')
 lablencoder1  = joblib.load('lablencoder1.joblib')
