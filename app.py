@@ -1,12 +1,26 @@
 import streamlit as st
 import pandas as pd
-from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier
 import joblib
+import numpy as np
 
 
 
+
+# Load all the pickle files
+# onehotencoder = pickle.load(open('models/onehotencoder.pkl','rb'))
+# lablencoder1  = pickle.load(open('models/lablencoder1.pkl','rb'))
+# lablencoder2  = pickle.load(open('models/lablencoder2.pkl','rb'))
+# scaler        = pickle.load(open('models/scaler.pkl','rb'))
+# regressor     = joblib.load(os.path.expanduser('models/regressor.joblib'))
+# with open('models/regressor.joblib', "rb") as f:  
+#      regressor = joblib.load(f)
+
+
+
+# Load the playstore data from google drive 
 df12 = pd.read_csv('Car_price_prediction_clean.csv')
+
 
 st.write('# Car Price Predictor')
 
@@ -124,7 +138,7 @@ with st.sidebar:
 
      # wheel
      wheel = st.selectbox(
-          label   = "How many wheels are there in your car?",
+          label   = "What is the wheels type in your car?",
           options = df12['wheel'].value_counts().index
           )
 
@@ -146,15 +160,54 @@ with st.sidebar:
                          value       = int(round(df12['airbags'].mean(),0))
                          )
 
+          
+          
+          
+          
+
+col = ['levy', 'manufacturer', 'model', 'prd_yr', 'category', 'leather_intr',
+       'fuel_typ', 'engine_vol', 'mileage(km)', 'gear_box', 'drive_wheels',
+       'doors', 'wheel', 'color', 'airbags', 'engine_turbo']
+
+values = [[levy, manufacturer, model, pyear, category, leather_intr,
+       fuel_typ, engine_vol, mileage, gear_box, drive_wheels,
+       doors, wheel, color, airbags, engine_turbo]]
+
+X_test = pd.DataFrame(values, columns = col)
+
+             
+             
+                    
+
+try:
+    regressor     = joblib.load('Newreg.pkl')
+except:
+    st.write('Newreg files are unable to load')
+
+try:
+    # Code to test / execute
+    onehotencoder = joblib.load('onehotencoder.pkl')
+    lablencoder1  = joblib.load('lablencoder1.pkl')
+    lablencoder2  = joblib.load('lablencoder2.pkl')
+    scaler        = joblib.load('scaler.pkl')
+except:
+    st.write('pickle files are unable to load')
 
 
 
 
+try:
+    X_test_OHE             = onehotencoder.transform(X_test[['category','fuel_typ','gear_box','drive_wheels','doors','wheel','color']])
+    X_test['manufacturer'] = lablencoder1.transform(X_test['manufacturer'])
+    X_test['model']        = lablencoder2.transform(X_test['model'])
 
-onehotencoder = joblib.load('onehotencoder.joblib')
-lablencoder1  = joblib.load('lablencoder1.joblib')
-lablencoder2  = joblib.load('lablencoder2.joblib')
-scaler        = joblib.load('scaler.joblib')
-regressor     = joblib.load('Newreg.joblib')
+    X_test_rem             = X_test.drop(['category','fuel_typ','gear_box','drive_wheels','doors','wheel','color'], axis =1 )
+    X_test_transformed     = np.concatenate((X_test_rem , X_test_OHE) ,axis=1)
+    X_test_scale  = scaler.transform(X_test_transformed)
+    prize = round(regressor.predict(X_test_scale)[0])
 
+    if st.button('Predict Price'):
+        st.write('### The estimated price of your car is just $' + str(prize) + "...!")
 
+except:
+    st.write('Unable to predict.')
